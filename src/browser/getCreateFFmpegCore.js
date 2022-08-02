@@ -36,10 +36,8 @@ module.exports = async ({ corePath: _corePath }) => {
     'application/javascript',
   );
   if (typeof createFFmpegCore === 'undefined') {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
+    return new Promise(async(resolve) => {
       const eventHandler = () => {
-        script.removeEventListener('load', eventHandler);
         if (typeof createFFmpegCore === 'undefined') {
           throw Error(CREATE_FFMPEG_CORE_IS_NOT_DEFINED(coreRemotePath));
         }
@@ -51,10 +49,13 @@ module.exports = async ({ corePath: _corePath }) => {
           workerPath,
         });
       };
-      script.src = corePath;
-      script.type = 'text/javascript';
-      script.addEventListener('load', eventHandler);
-      document.getElementsByTagName('head')[0].appendChild(script);
+      if (importScripts) {
+        importScripts(corePath);
+        eventHandler();
+      } else {
+        await import(corePath);
+        eventHandler();
+      }
     });
   }
   log('info', 'ffmpeg-core.js script is loaded already');
